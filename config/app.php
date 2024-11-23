@@ -123,4 +123,11 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /**
+     * Some custom config for this app
+     */
+    'IGNORE_IP_ADDRESSES' => env('IGNORE_IP_ADDRESSES'),
+    'MIN_IP_CONNECTIONS' => env('MIN_IP_CONNECTIONS', 2),
+    'IP_API_URL' => env('IP_API_URL', 'https://api.ipapi.is'),
+    'IP_API_KEY' => env('IP_API_KEY', false),
 ];

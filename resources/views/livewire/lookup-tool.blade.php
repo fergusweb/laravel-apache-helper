@@ -3,7 +3,7 @@
         <fieldset>
             <legend>Paste list of IPs or rows from apache-status</legend>
 
-            <textarea id="inputText" wire:model.change="inputText" rows="6" placeholder="Paste data here..."></textarea>
+            <textarea id="inputText" wire:model.change="inputText" rows="6" spellCheck="false" placeholder="Paste data here..."></textarea>
 
             @error('inputText')
                 <p class="error">{{ $message }}</p>
@@ -17,7 +17,7 @@
                 <tr>
                     <th>&nbsp;</th>
                     <th>IP Address</th>
-                    <th>Count</th>
+                    <th>#</th>
                     <th>Flags</th>
                     <th>Country</th>
                     <th>Provider</th>
@@ -39,13 +39,13 @@
                             {{ $result['count'] }}
                         </td>
                         <td>
-                            TODO: Flags
+                            {!! $result['flags'] !!}
+                        </td>
+                        <td class="country">
+                            {!! $result['country'] !!}
                         </td>
                         <td>
-                            TODO: Country
-                        </td>
-                        <td>
-                            TODO: Provider
+                            {!! $result['provider'] !!}
                         </td>
                         <td class="requests">
                             {!! $result['requests'] !!}

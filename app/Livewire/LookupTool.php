@@ -69,7 +69,7 @@ class LookupTool extends Component
      */
     public function lookup()
     {
-        $this->validate();
+        //$this->validate();
         $lookupService = app(LookupService::class);
         $this->parsedResults = $lookupService->lookup($this->inputText);
     }
