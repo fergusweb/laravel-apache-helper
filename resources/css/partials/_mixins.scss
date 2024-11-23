@@ -1,0 +1,22 @@
+// Mixins
+@mixin wrapper {
+    background: rgba(255, 255, 255, 0.6);
+    width: 100%;
+    max-width: 150ch;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0.1em 0.1em 0.2em rgba(0, 0, 0, 0.3);
+    margin: 0 auto 2em;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+@mixin button-styles($color) {
+    background-color: $color;
+    border: none;
+    color: #fff;
+    padding: 10px 20px;
+    cursor: pointer;
+}

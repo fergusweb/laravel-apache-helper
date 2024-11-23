@@ -1,0 +1,8 @@
+@use "../partials" as *;
+
+footer {
+    @include wrapper;
+    color: #fff;
+    background: var(--background);
+    box-shadow: 0.1em 0.1em 0.4em rgba(0, 0, 0, 0.4);
+}
