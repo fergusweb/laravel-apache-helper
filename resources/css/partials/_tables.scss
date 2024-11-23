@@ -1,0 +1,43 @@
+@use "../partials" as *;
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+        padding: 0 0.3rem;
+        text-align: left;
+    }
+    th {
+        background: var(--table-row-bg);
+        font-weight: bold;
+        padding: 0.3em;
+    }
+    td {
+        &.ip {
+            label {
+                cursor: pointer;
+                display: block;
+                padding: 0.3em 0.3em;
+            }
+        }
+        &.requests {
+            font-size: 0.75em;
+            width: 40%;
+            max-width: fit-content;
+            overflow: hidden;
+            white-space: wrap;
+        }
+    }
+    tr {
+        transition: 0.2s all;
+        &:nth-child(even) {
+            background: var(--table-row-bg);
+        }
+        &:has(input[type="checkbox"]:checked) {
+            background-color: #d4beab;
+            color: #000;
+        }
+    }
+}

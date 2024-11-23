@@ -51,6 +51,11 @@ p {
     &:last-child {
         margin-bottom: 0;
     }
+
+    &.error {
+        color: #c00;
+        font-weight: 500;
+    }
 }
 
 .wrapper {

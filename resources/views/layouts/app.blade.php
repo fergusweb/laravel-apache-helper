@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>My Laravel App</title>
     @vite(['resources/css/app.scss'])
+    @livewireStyles
 </head>
 
 <body>
@@ -21,6 +22,7 @@
     @include('partials.footer')
 
     @vite(['resources/js/app.js'])
+    @livewireScripts
 </body>
 
 </html>

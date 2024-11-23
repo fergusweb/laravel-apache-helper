@@ -2,11 +2,10 @@
 
 @section('content')
     <h1>Lookup</h1>
+    @livewire('lookup-tool')
 @endsection
 
 @section('commands')
-    <aside class="wrapper">
-        <h1>Command box here</h1>
-    </aside>
+    @livewire('command-box')
 @endsection
 

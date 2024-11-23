@@ -1,0 +1,79 @@
+@use "../partials" as *;
+
+form {
+    margin: 0 0 2em 0;
+    &:last-child {
+        margin-bottom: 0;
+    }
+    fieldset {
+        border: 0;
+        padding: 0;
+        margin: 0 0 1.5em 0;
+        &:last-child {
+            margin-bottom: 0;
+        }
+        legend {
+            font-weight: bold;
+        }
+    }
+    textarea {
+        width: 100%;
+        min-height: 6em;
+        border: 1px solid var(--overlay-bg);
+        background: var(--code-bg);
+        padding: 0.5em;
+        color: #fff;
+        border-radius: var(--border-radius);
+        font-family: monospace;
+    }
+}
+
+.command-box {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-areas:
+        "heading heading"
+        "duration copy"
+        "code code";
+    grid-gap: 0.5em;
+    @media only screen and (min-width: 800px) {
+        grid-template-columns: auto auto min-content min-content;
+        grid-template-areas:
+            "heading . duration copy"
+            "code code code code";
+    }
+
+    h2 {
+        grid-area: heading;
+        margin: 0;
+    }
+    label.duration {
+        grid-area: duration;
+        white-space: nowrap;
+        cursor: pointer;
+        select {
+            cursor: pointer;
+            padding: 0.3em;
+            border: 0;
+            outline: none;
+        }
+    }
+    p.copy {
+        grid-area: copy;
+        white-space: nowrap;
+        margin: 0;
+        button {
+            @include button-styles();
+        }
+    }
+    pre.output {
+        grid-area: code;
+        text-wrap: auto;
+        max-width: 100%;
+        border: 1px solid var(--overlay-bg);
+        background: var(--code-bg);
+        padding: 0.5em;
+        color: #fff;
+        border-radius: var(--border-radius);
+    }
+}

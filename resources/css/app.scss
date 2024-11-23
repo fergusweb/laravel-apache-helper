@@ -1,6 +1,8 @@
 @use "partials" as *;
 @use "partials/global";
 @use "partials/header";
+@use "partials/forms";
+@use "partials/tables";
 @use "partials/footer";
 
 @import "normalize.css/normalize.css";
