@@ -1,0 +1,27 @@
+## NETWORKS
+networks:
+  t3_proxy: # Declared in network stack, so we can talk to Traefik
+    external: true
+
+services:
+  app:
+    container_name: laravel-apache-helper
+    build:
+      context: .
+      dockerfile: Dockerfile
+#    ports:
+#      - 8000:80
+    # Network to talk to reverse proxy
+    networks:
+      - t3_proxy
+    # Labels are optional, you can remove if you don't use them
+    labels:
+      - traefik.enable=${TRAEFIK_ENABLE}
+      - traefik.http.routers.laravel-apache-helper.rule=${TRAEFIK_RULE}
+      - traefik.http.routers.laravel-apache-helper.entrypoints=${TRAEFIK_ENTRYPOINTS}
+      - traefik.http.services.laravel-apache-helper.loadbalancer.server.port=${TRAEFIK_SERVICE_PORT}
+      - homepage.group=${HOMEPAGE_GROUP}
+      - homepage.name=${HOMEPAGE_NAME}
+      - homepage.description=${HOMEPAGE_DESCRIPTION}
+      - homepage.icon=${HOMEPAGE_ICON}
+      - homepage.href=${HOMEPAGE_HREF}
