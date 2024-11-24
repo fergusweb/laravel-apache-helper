@@ -21,6 +21,12 @@ It performs a lookup of each IP address, noting it's location & network provider
 
 Selected rows will be added to a command box at the bottom, which provides `csf -td` commands for each IP address in a single line that you can copy/paste into your SSh window.
 
+## API Key
+IP lookups are done using the [IP API](https://ipapi.is), so you'll need to get an API key there and add it to your `.env` file.
+
+They offer a free API Key for up to 1,000 requests per day.  This system groups all IPs together into a single batch query, and uses caching to try and minimise lookups.
+
+
 ## Setup
 
 Should be as simple as updating the `.env` file.  
