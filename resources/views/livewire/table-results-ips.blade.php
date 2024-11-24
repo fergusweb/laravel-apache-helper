@@ -35,13 +35,13 @@
                         {!! $result['flags'] !!}
                     </td>
                     <td class="country">
-                        {!! $result['country'] !!}
+                        {!! $result['country'] ?? 'Not available' !!}
                     </td>
                     <td class="provider">
-                        {!! $result['provider'] !!}
+                        {!! $result['provider'] ?? 'Not available' !!}
                     </td>
                     <td class="requests">
-                        {!! $result['requests'] !!}
+                        {!! $result['requests'] ?? 'Not available' !!}
                     </td>
                 </tr>
             @endforeach
