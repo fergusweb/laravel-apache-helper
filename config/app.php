@@ -126,6 +126,7 @@ return [
     /**
      * Some custom config for this app
      */
+    'APACHE_STATUS_URLS' => env('APACHE_STATUS_URLS'),
     'IGNORE_IP_ADDRESSES' => env('IGNORE_IP_ADDRESSES'),
     'MIN_IP_CONNECTIONS' => env('MIN_IP_CONNECTIONS', 2),
     'IP_API_URL' => env('IP_API_URL', 'https://api.ipapi.is'),

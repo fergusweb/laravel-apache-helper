@@ -77,3 +77,19 @@ form {
         border-radius: var(--border-radius);
     }
 }
+
+.copy-notice {
+    position: absolute;
+    background: #000;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    z-index: 1000;
+
+    &.fade-out {
+        opacity: 0;
+    }
+}

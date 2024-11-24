@@ -18,13 +18,13 @@ table {
         white-space: nowrap;
         padding: 0.25em;
         &.ip {
-            label {
-                cursor: pointer;
-                display: block;
-                padding: 0.3em 0.3em;
-            }
+            cursor: pointer;
         }
-        .country {
+        &.country {
+        }
+        &.provider {
+            max-width: 18em;
+            overflow: hidden;
         }
         &.requests {
             font-size: 0.7em;

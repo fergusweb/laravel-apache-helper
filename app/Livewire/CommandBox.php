@@ -11,7 +11,7 @@ class CommandBox extends Component
 {
 
 
-    public $ttl = '12h'; // Default TTL
+    public $ttl = '8h'; // Default TTL
     public $ttl_values = [
         '30m'   => '30 mins',
         '1h'    => '1 hour',
