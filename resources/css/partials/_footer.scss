@@ -2,7 +2,9 @@
 
 footer {
     @include wrapper;
-    color: #fff;
     background: var(--background);
     box-shadow: 0.1em 0.1em 0.4em rgba(0, 0, 0, 0.4);
+    text-align: right;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.8);
 }
