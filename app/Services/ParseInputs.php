@@ -80,7 +80,8 @@ class ParseInputs
     /**
      * Make ipData array into a collection
      *
-     * @param  array $data ipData to sort into collection
+     * @param array $ipData ipData to sort into collection
+     *
      * @return \Illuminate\Support\Collection<TKey, TValue>
      */
     public function makeCollection(array $ipData)
@@ -218,17 +219,21 @@ class ParseInputs
      *
      * @param array $data Data from the scrape() function
      *
-     * @return array
+     * @return \Illuminate\Support\Collection<TKey, TValue>
      */
-    public function crunchScraperInput(array $data): array
+    public function crunchScraperInput(array $data)
     {
         $ipData = array();
 
         if ($this->debug) {
             Log::notice('Parsing data with ' . count($data) .' rows');
+            Log::notice($data);
         }
         foreach ($data as $row) {
-
+            if ($this->debug) {
+                Log::notice('Parsing row...');
+                Log::notice($row);
+            }
             // Data from row
             $ip = $row[11];
             $domain = $row[13];

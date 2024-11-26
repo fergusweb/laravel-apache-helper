@@ -5,7 +5,10 @@ namespace App\Services;
 use App\Services\LookupIPsWithAPI;
 use App\Services\ParseInputs;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+
+
 
 
 class LookupStatusPages
@@ -51,9 +54,9 @@ class LookupStatusPages
      *
      * @param array $data Data from the scrape() function
      *
-     * @return array
+     * @return \Illuminate\Support\Collection<TKey, TValue>
      */
-    public function parse($data = array()): array
+    public function parse($data = array())
     {
         $parsedData = array();
         // If no data supplied, we'll scrape now.
@@ -68,37 +71,63 @@ class LookupStatusPages
     }
 
     /**
-     * Scrape Pages
+     * Scrape Pages, using concurrency & caching
      *
      * @return array
      */
     public function scrape(): array
     {
         $combined = array();
+        $responses = array();
+
+
+        // Loop through URLs and check for cached results
         foreach ($this->status_pages as $url) {
-            // Use cached data if available
             $cacheKey = 'status_' . md5($url);
-            $cachedData = cache()->get($cacheKey);
-            if ($cachedData) {
+            $responses[$url] = Cache::remember(
+                $cacheKey, 300, function () use ($url) {
+                    return null; // Placeholder to ensure missing cache entries are fetched below
+                }
+            );
+            if ($responses[$url]) {
+                $combined = array_merge($combined, $responses[$url]);
                 if ($this->debug) {
                     Log::notice('Found cached results for: ' . $url);
                 }
-                return $cachedData;
             }
-            // Perform lookup
-            if ($this->debug) {
-                Log::notice('Scraping page: ' . $url);
-            }
-            $response = Http::get($url);
-            // Handle unsuccessful responses
-            if (!$response->successful()) {
-                throw new \Exception('Failed to fetch IP lookup data: ' . $response->body());
-            }
-            // Do any processing?
-            $array = $this->parseApacheStatusTable($response);
+        }
+        // Filter out URLs that were not found in the cache
+        $uncachedUrls = array_keys(array_filter($responses, fn($value) => $value === null));
 
-            // Save response
-            cache()->put($cacheKey, $array, now()->addSeconds(30));
+        // Fetch remaining URLs concurrently
+        if (!empty($uncachedUrls)) {
+            $apiResponses = Http::pool(
+                function ($pool) use ($uncachedUrls) {
+                    return array_map(fn($url) => $pool->get($url), $uncachedUrls);
+                }
+            );
+
+            // Process and store responses in cache
+            foreach ($uncachedUrls as $index => $url) {
+                $response = $apiResponses[$index];
+
+                if ($response->successful()) {
+                    if ($this->debug) {
+                        Log::notice('Found cached results for: ' . $url);
+                    }
+                    // Not this:
+                    $responses[$url] = $response->body();
+                    $parsedData = $this->parseApacheStatusTable($response);
+                    $responses[$url] = $parsedData;
+                    $combined = array_merge($combined, $parsedData);
+
+                    // Cache for next time.
+                    Cache::put('status_' . md5($url), $parsedData, now()->addSeconds(30));
+                } else {
+                    Log::warning('Failed to fetch: ' . $url);
+                    Log::warning($response->status());
+                }
+            }
         }
         return $combined;
     }
