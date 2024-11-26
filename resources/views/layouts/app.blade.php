@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>My Laravel App</title>
+    <title>{{ config('app.name', 'Apache Helper') }}</title>
     @vite(['resources/css/app.scss'])
     @livewireStyles
 </head>

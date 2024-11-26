@@ -3,11 +3,16 @@
 namespace App\Services;
 
 use App\Services\LookupIPsWithAPI;
+use App\Services\ParseInputs;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+
 class LookupStatusPages
 {
+
+
+    protected bool $debug = false;
 
     /**
      * Status page URLs to scrape
@@ -55,15 +60,21 @@ class LookupStatusPages
         if (!$data || empty($data)) {
             $data = $this->scrape();
         }
-        Log::notice('Parsing data with ' . count($data) .' rows');
+
+        // Use our parser utility
+        $parser = new ParseInputs;
+        $ipData = $parser->crunchScraperInput($data);
+        return $ipData;
+
+        /*
+        if ($this->debug) {
+            Log::notice('Parsing data with ' . count($data) .' rows');
+        }
         foreach ($data as $key => $row) {
-            //Log::notice($row);
             $ip = $row[11];
             $domain = $row['13'];
             $uri = $row['14'];
             $request = "$domain $uri";
-            //motorbikemovers.com.au:443 GET /chosen.php
-
 
             // If IP is not yet in array, prepare it.
             if (!array_key_exists($ip, $parsedData)) {
@@ -107,6 +118,8 @@ class LookupStatusPages
                 ];
             }
         )->sortByDesc('count')->all(); // Retains the keys
+        */
+
     }
 
     /**
@@ -122,21 +135,22 @@ class LookupStatusPages
             $cacheKey = 'status_' . md5($url);
             $cachedData = cache()->get($cacheKey);
             if ($cachedData) {
-                Log::notice('Found cached results for: ' . $url);
+                if ($this->debug) {
+                    Log::notice('Found cached results for: ' . $url);
+                }
                 return $cachedData;
             }
             // Perform lookup
-            Log::notice('Scraping page: ' . $url);
+            if ($this->debug) {
+                Log::notice('Scraping page: ' . $url);
+            }
             $response = Http::get($url);
             // Handle unsuccessful responses
             if (!$response->successful()) {
                 throw new \Exception('Failed to fetch IP lookup data: ' . $response->body());
             }
             // Do any processing?
-            //Log::notice('Scrape page: ' . $response);
             $array = $this->parseApacheStatusTable($response);
-            //Log::notice('Parsed Table: ');
-            //Log::notice($array);
 
             // Save response
             cache()->put($cacheKey, $array, now()->addSeconds(30));
@@ -147,7 +161,8 @@ class LookupStatusPages
     /**
      * Use DOMDocument to parse the response, extract the table as an array
      *
-     * @param  \Illuminate\Http\Client\Response $response
+     * @param \Illuminate\Http\Client\Response $response Response
+     *
      * @return array
      */
     public function parseApacheStatusTable(\Illuminate\Http\Client\Response $response): array

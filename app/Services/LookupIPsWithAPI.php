@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 class LookupIPsWithAPI
 {
 
+    protected bool $debug = false;
+
     /**
      * API URL - add to your config or .env
      *
@@ -40,10 +42,14 @@ class LookupIPsWithAPI
         $cacheKey = 'ip_lookup_' . md5(implode(',', $ips));
         $cachedResults = cache()->get($cacheKey);
         if ($cachedResults) {
-            Log::notice('Found cached results from IP API lookup...');
+            if ($this->debug) {
+                Log::notice('Found cached results from IP API lookup...');
+            }
             return $cachedResults;
         }
-        Log::notice('No cache hit.  Count of IPs to look up via IP: ' . count($ips));
+        if ($this->debug) {
+            Log::notice('No cache hit.  Count of IPs to look up via IP: ' . count($ips));
+        }
 
 
         // Now do the API lookup
@@ -60,18 +66,14 @@ class LookupIPsWithAPI
 
         // Parse the API response
         $apiResults = $response->json();
-        //Log::notice('API response:');
-        //Log::notice($apiResults);
-
-
 
         // Run through our $data array, and insert more data from API lookups
         foreach ($data as $ip => $row) {
+            if (!$ip || $ip == '-' || empty($row)) {
+                continue;
+            }
+
             $fetched = $apiResults[$ip];
-            // Not everything.
-            //foreach ($fetched as $k => $v) {
-                //$data[$ip][$k] = $v;
-            //}
 
             // Selected data to include:
             if (isset($fetched['company']) && $fetched['company']['name']) {
@@ -113,8 +115,10 @@ class LookupIPsWithAPI
         // Cache the results for 5 minutes
         cache()->put($cacheKey, $data, now()->addMinutes(10));
 
-        Log::notice('Merged data:');
-        Log::notice($data);
+        if ($this->debug) {
+            Log::notice('Merged data:');
+            Log::notice($data);
+        }
 
         return $data;
     }
