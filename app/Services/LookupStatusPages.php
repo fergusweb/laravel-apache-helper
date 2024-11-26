@@ -25,7 +25,7 @@ class LookupStatusPages
     /**
      * Constructor
      *
-     * @param LookupIPsWithAPI $api
+     * @param LookupIPsWithAPI $api Load the api automatically
      */
     public function __construct(protected LookupIPsWithAPI $api,)
     {
@@ -65,61 +65,6 @@ class LookupStatusPages
         $parser = new ParseInputs;
         $ipData = $parser->crunchScraperInput($data);
         return $ipData;
-
-        /*
-        if ($this->debug) {
-            Log::notice('Parsing data with ' . count($data) .' rows');
-        }
-        foreach ($data as $key => $row) {
-            $ip = $row[11];
-            $domain = $row['13'];
-            $uri = $row['14'];
-            $request = "$domain $uri";
-
-            // If IP is not yet in array, prepare it.
-            if (!array_key_exists($ip, $parsedData)) {
-                $parsedData[$ip] = array(
-                    'ip' => null,
-                    'count' => 0,
-                    'requests' => [],
-                );
-            }
-            // Add data to array
-            $parsedData[$ip]['ip'] = $ip;
-            $parsedData[$ip]['count']++;
-            if (!empty($request)) {
-                $parsedData[$ip]['requests'][] = $request;
-            }
-
-        }
-
-        //Log::notice('Parsed Data:');
-        //Log::notice($parsedData);
-
-        // Run through and clean up excluded IPs.
-        $min_connections = config('app.MIN_IP_CONNECTIONS');
-        $ignore_ips = config('app.IGNORE_IP_ADDRESSES');
-        if ($ignore_ips) {
-            $ignore_ips = explode(',', $ignore_ips);
-        }
-        foreach ($parsedData as $ip => $data) {
-            if (in_array($ip, $ignore_ips) || $data['count'] < $min_connections) {
-                unset($parsedData[$ip]);
-            }
-        }
-
-        //return $parsedData;
-        return collect($parsedData)->map(
-            function ($data, $ip) {
-                return [
-                    'ip' => $ip,
-                    'count' => $data['count'],
-                    'requests' => implode('<br>', array_unique($data['requests'])),
-                ];
-            }
-        )->sortByDesc('count')->all(); // Retains the keys
-        */
-
     }
 
     /**
@@ -167,9 +112,6 @@ class LookupStatusPages
      */
     public function parseApacheStatusTable(\Illuminate\Http\Client\Response $response): array
     {
-        // Get the response from the Apache Status Page
-        //$response = Http::get($url);
-
         // Initialize DOMDocument
         $dom = new \DOMDocument();
         @$dom->loadHTML($response->body()); // Suppress warnings for malformed HTML
