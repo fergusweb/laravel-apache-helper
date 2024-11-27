@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 class ParseInputs
 {
 
-    protected bool $debug = true;
+    protected bool $debug = false;
 
 
     protected string $ipv4Pattern = '/\b(?:\d{1,3}\.){3}\d{1,3}\b/';
@@ -89,10 +89,32 @@ class ParseInputs
         $collection = collect($ipData)->map(
             function ($data, $ip) {
                 $data['requests'] = implode('<br>', array_unique($data['requests']));
+                $data['requests'] = $this->highlightRequests($data['requests']);
                 return $data;
             }
         )->sortByDesc('count')->all();
         return $collection;
+    }
+
+    /**
+     * Highlight problematic strings in requst like moon.php, etc.
+     *
+     * @param string $requests String to filter
+     *
+     * @return string
+     */
+    public function highlightRequests(string $requests): string
+    {
+        $flaggedWords = [
+            'defence.php', 'dialog.php', 'moon.php', 'tools.php', 'wp-login.php', '/SimplePie', 'xx.php', 'xxx.php', 'bypass.php', 'wp-login.php', '.php'
+        ];
+
+        // Replace flagged words with the highlighted version, case-insensitively
+        foreach ($flaggedWords as $word) {
+            $requests = str_ireplace($word, '<span class="highlight">' . $word . '</span>', $requests);
+        }
+
+        return $requests;
     }
 
 

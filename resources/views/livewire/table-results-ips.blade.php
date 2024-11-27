@@ -26,7 +26,7 @@
                             wire:model="selectedIps" />
                     </td>
                     <td class="ip">
-                        {{ $result['ip'] }}
+                        <span class="copy">{{ $result['ip'] }}</span>
                     </td>
                     <td>
                         {{ $result['count'] }}
@@ -50,6 +50,7 @@
 </div>
 
 <script>
+    /*
     document.addEventListener('DOMContentLoaded', () => {
         // Attach a click event listener to the document
         document.addEventListener('click', (event) => {
@@ -89,5 +90,6 @@
             }
         });
     });
+    */
 </script>
 

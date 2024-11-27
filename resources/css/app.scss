@@ -9,3 +9,20 @@
 @use "flag-icons/css/flag-icons.min.css";
 
 @import "normalize.css/normalize.css";
+
+.highlight {
+    background: #f16723;
+    display: inline-block;
+}
+
+.copied-message {
+    position: absolute;
+    background-color: #000;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
