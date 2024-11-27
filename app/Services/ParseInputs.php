@@ -106,7 +106,11 @@ class ParseInputs
     public function highlightRequests(string $requests): string
     {
         $flaggedWords = [
-            'defence.php', 'dialog.php', 'moon.php', 'tools.php', 'wp-login.php', '/SimplePie', 'xx.php', 'xxx.php', 'bypass.php', 'wp-login.php', '.php'
+            'defence.php', 'dialog.php', 'moon.php', 'tools.php',
+            'wp-login.php', 'SimplePie', 'xx.php', 'xxx.php', 'bypass.php',
+            'wlwmanifest.xml', 'xmlrpc.php', 'byp.php', 'duck.php', 'upload.php',
+            'wsoyanz.php', 'wp-config.php',
+            '.php'
         ];
 
         // Replace flagged words with the highlighted version, case-insensitively
