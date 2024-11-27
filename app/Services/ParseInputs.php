@@ -109,7 +109,7 @@ class ParseInputs
             'defence.php', 'dialog.php', 'moon.php', 'tools.php',
             'wp-login.php', 'SimplePie', 'xx.php', 'xxx.php', 'bypass.php',
             'wlwmanifest.xml', 'xmlrpc.php', 'byp.php', 'duck.php', 'upload.php',
-            'wsoyanz.php', 'wp-config.php',
+            'wsoyanz.php', 'wp-config.php', '/backup', '/bk', '/main', '/home',
             '.php'
         ];
 
