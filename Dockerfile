@@ -11,7 +11,7 @@ RUN npm ci && npm cache clean --force
 COPY . /app
 RUN composer install
 #RUN npm install
-#RUN npm run build
+RUN npm run build
 
 CMD php artisan serve --host=0.0.0.0 --port=80
 EXPOSE 80
