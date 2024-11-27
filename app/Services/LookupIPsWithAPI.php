@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 class LookupIPsWithAPI
 {
 
-    protected bool $debug = false;
+    protected bool $debug = true;
 
     /**
      * API URL - add to your config or .env
@@ -26,73 +26,183 @@ class LookupIPsWithAPI
         $this->apiUrl = config('app.IP_API_URL').'?key='.config('app.IP_API_KEY');
     }
 
+
+
     /**
-     * Perform a bulk lookup of all IP addresses in this array, and add data to response.
+     * Lookup these IP addresses to fetch data from API.
      *
-     * @param array $data Parsed array of data (ip => [count, requests])
+     * @param array $ipData Parsed array of data (ip => [count, requests])
      *
      * @return array
      */
-    public function lookup(array $data): array
+    public function lookup(array $ipData): array
     {
-        // Array of IP addresses to look up
-        $ips = array_keys($data);
+        // Get list of IP addresses
+        $ips = array_keys($ipData);
 
-        // Check if cached data exists
-        $cacheKey = 'ip_lookup_' . md5(implode(',', $ips));
-        $cachedResults = cache()->get($cacheKey);
-        if ($cachedResults) {
-            if ($this->debug) {
-                Log::notice('Found cached results from IP API lookup...');
-            }
-            return $cachedResults;
-        }
-        if ($this->debug) {
-            Log::notice('No cache hit.  Count of IPs to look up via IP: ' . count($ips));
-        }
-
-
-        // Now do the API lookup
-        $response = Http::post(
-            $this->apiUrl, [
-                'ips' => $ips,
-            ]
-        );
-
-        // Handle unsuccessful responses
-        if (!$response->successful()) {
-            throw new \Exception('Failed to fetch IP lookup data: ' . $response->body());
-        }
-
-        // Parse the API response
-        $apiResults = $response->json();
-
-        // Run through our $data array, and insert more data from API lookups
-        foreach ($data as $ip => $row) {
-            if (!$ip || $ip == '-' || empty($row)) {
+        // Remove any we have saved, they don't need to be fetched
+        $removedIPs = array();
+        foreach ($ips as $key => $ip) {
+            // Skip things that are not an IP // TODO: proper regex validation?
+            if (!$ip || !$this->isValidIP($ip)) {
+                unset($ips[$key]);
                 continue;
             }
-
-            $fetched = $apiResults[$ip];
-
-            // Selected data to include:
-            if (isset($fetched['company']) && $fetched['company']['name']) {
-                $data[$ip]['provider'] = $fetched['company']['name'];
+            // Check if we have data saved?
+            $loaded = $this->loadIP($ip);
+            // If so, remove this IP from the query
+            if ($loaded) {
+                unset($ips[$key]);
+                $removedIPs[] = $ip;
+                if ($this->debug) {
+                    Log::debug('Removing IP '.$ip.' from the batch lookup');
+                }
+                continue;
             }
+            if ($this->debug) {
+                Log::debug('Will look up: '.$ip);
+            }
+        }
+
+        // Break up IPs into batches of 100
+        $batches = array_chunk($ips, 100);
+
+        // Loop through batches to perform lookups
+        $responses = array();
+        foreach ($batches as $index => $batch) {
+            if ($this->debug) {
+                Log::debug('Looking up ' . count($batch) .' IPs...');
+            }
+            $response = $this->loadFromAPI($batch);
+
+            foreach ($response as $key => $data) {
+                $responses[$key] = $data;
+            }
+        }
+        if ($this->debug) {
+            Log::debug('Combined responses:');
+            Log::debug($responses);
+        }
+
+        // Fill in IP data with our responses
+        $ipData = $this->fillData($ipData, $responses);
+
+        // Now we need to add any cached IP data back in.
+        if ($this->debug) {
+            Log::notice('Need to load cached data for these removed IPs:');
+            Log::notice($removedIPs);
+        }
+        foreach ($removedIPs as $ip) {
+            $data = $this->loadIP($ip);
+            if ($data) {
+                $ipData[$ip] = $data;
+            }
+        }
+
+        if ($this->debug) {
+            Log::notice('Full ipData:');
+            Log::notice($ipData);
+        }
+
+        return $ipData;
+    }
+
+
+    /**
+     * Check if $ip is a valid IP v4
+     *
+     * @param string $ip IP address to check
+     *
+     * @return boolean
+     */
+    public function isValidIP(string $ip): bool
+    {
+        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false;
+    }
+
+
+    /**
+     * Load cached IP address if present
+     *
+     * @param string $ip IP address
+     *
+     * @return array|boolean
+     */
+    public function loadIP(string $ip): array|bool
+    {
+        $cacheKey = 'ip_'.$ip;
+        $data = cache()->get($cacheKey);
+        if ($data) {
+            if ($this->debug) {
+                Log::debug('Found cached data for IP: '.$ip);
+            }
+            return $data;
+        }
+        return false;
+    }
+
+
+    /**
+     * Cache the IP address
+     *
+     * @param string $ip   IP address
+     * @param array  $data Data to save
+     *
+     * @return boolean
+     */
+    public function saveIP(string $ip, array $data): bool
+    {
+        $cacheKey = 'ip_'.$ip;
+        cache()->put($cacheKey, $data, now()->addHours(12));
+        if ($this->debug) {
+            Log::debug('Adding data to cache for IP: '.$ip);
+        }
+        return false;
+    }
+
+
+    /**
+     * Fill in $ipData with data from $apiResponse
+     *
+     * @param array $ipData      Array of data (ip => [count, requests])
+     * @param array $apiResponse Data from API lookup
+     *
+     * @return array
+     */
+    public function fillData(array $ipData, array $apiResponse, bool $save=true): array
+    {
+        foreach ($ipData as $ip => $row) {
+            // Shorthand for data from results
+            if (!array_key_exists($ip, $apiResponse)) {
+                Log::warning('IP: '.$ip. ' is not in $apiResponse');
+                continue;
+            }
+            $fetched = $apiResponse[$ip];
+
+            Log::warning('Filling data for IP: '.$ip);
+            Log::warning($row);
+            Log::warning($fetched);
+
+
+            // Add the Provider company name
+            if (isset($fetched['company']) && $fetched['company']['name']) {
+                $row['provider'] = $fetched['company']['name'];
+            }
+            // Add the Country plus a flag
             if (isset($fetched['location'])) {
-                if (!array_key_exists('country', $data[$ip])) {
-                    $data[$ip]['country'] = '';
+                if (!array_key_exists('country', $row)) {
+                    $row['country'] = '';
                 }
                 if (isset($fetched['location']['country_code'])) {
                     $flag = strtolower($fetched['location']['country_code']);
-                    $data[$ip]['country'] .= "<span class=\"fi fi-$flag\"></span>";
+                    $row['country'] .= "<span class=\"fi fi-$flag\"></span>";
                 }
                 if ($fetched['location']['country']) {
-                    $data[$ip]['country'] .= $fetched['location']['country'];
+                    $row['country'] .= $fetched['location']['country'];
                 }
 
             }
-            // Now set up our flags
+            // Set up the flags to use for this IP
             $flags = [];
             if ($fetched['is_crawler']) {
                 $flags[] = '<span title="Crawler Detected">🕷️</span>';
@@ -109,18 +219,45 @@ class LookupIPsWithAPI
             if ($fetched['is_abuser']) {
                 $flags[] = '<span title="Abuser Detected">⚠️</span>';
             }
-            $data[$ip]['flags'] = implode(' ', $flags);
+            $row['flags'] = implode(' ', $flags);
+            $ipData[$ip] = $row;
+            if ($save) {
+                $this->saveIP($ip, $row);
+            }
+        }
+        return $ipData;
+    }
+
+    /**
+     * Perform the API lookup for $ips and return array of results
+     *
+     * @param array $ips IP addresses to query
+     *
+     * @return array
+     */
+    public function loadFromAPI(array $ips): array
+    {
+        // Now do the API lookup
+        $response = Http::post(
+            $this->apiUrl, [
+                'ips' => $ips,
+            ]
+        );
+
+        // Handle unsuccessful responses
+        if (!$response->successful()) {
+            throw new \Exception('Failed to fetch IP lookup data: ' . $response->body());
         }
 
-        // Cache the results for 5 minutes
-        cache()->put($cacheKey, $data, now()->addMinutes(10));
+        // Parse the API response
+        $apiResults = $response->json();
 
         if ($this->debug) {
-            Log::notice('Merged data:');
-            Log::notice($data);
+            Log::notice('API Response:');
+            Log::notice($apiResults);
         }
 
-        return $data;
+        return $apiResults;
     }
 
 }
