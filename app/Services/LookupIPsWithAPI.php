@@ -4,12 +4,13 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Collection;
 
 
 class LookupIPsWithAPI
 {
 
-    protected bool $debug = true;
+    protected bool $debug = false;
 
     /**
      * API URL - add to your config or .env
@@ -33,9 +34,9 @@ class LookupIPsWithAPI
      *
      * @param array $ipData Parsed array of data (ip => [count, requests])
      *
-     * @return array
+     * @return \Illuminate\Support\Collection<TKey, TValue>
      */
-    public function lookup(array $ipData): array
+    public function lookup(array $ipData)
     {
         // Get list of IP addresses
         $ips = array_keys($ipData);
@@ -107,6 +108,19 @@ class LookupIPsWithAPI
         return $ipData;
     }
 
+    /**
+     * Make ipData array into a collection
+     *
+     * @param array $ipData ipData to sort into collection
+     *
+     * @return Collection
+     */
+    public function makeCollection(array $ipData)
+    {
+        $collection = collect($ipData)->sortByDesc('count')->all();
+        return $collection;
+    }
+
 
     /**
      * Check if $ip is a valid IP v4
@@ -166,28 +180,27 @@ class LookupIPsWithAPI
      *
      * @param array $ipData      Array of data (ip => [count, requests])
      * @param array $apiResponse Data from API lookup
+     * @param bool  $save        Whether to save/cache the data
      *
-     * @return array
+     * @return \Illuminate\Support\Collection<TKey, TValue>
      */
-    public function fillData(array $ipData, array $apiResponse, bool $save=true): array
+    public function fillData(array $ipData, array $apiResponse, bool $save=true)
     {
         foreach ($ipData as $ip => $row) {
-            // Shorthand for data from results
+            // If we don't have data in $apiResponse, skip it
             if (!array_key_exists($ip, $apiResponse)) {
                 Log::warning('IP: '.$ip. ' is not in $apiResponse');
                 continue;
             }
+
+            // Shorthand for data from results
             $fetched = $apiResponse[$ip];
-
-            Log::warning('Filling data for IP: '.$ip);
-            Log::warning($row);
-            Log::warning($fetched);
-
 
             // Add the Provider company name
             if (isset($fetched['company']) && $fetched['company']['name']) {
                 $row['provider'] = $fetched['company']['name'];
             }
+
             // Add the Country plus a flag
             if (isset($fetched['location'])) {
                 if (!array_key_exists('country', $row)) {
@@ -202,6 +215,7 @@ class LookupIPsWithAPI
                 }
 
             }
+
             // Set up the flags to use for this IP
             $flags = [];
             if ($fetched['is_crawler']) {
@@ -220,12 +234,14 @@ class LookupIPsWithAPI
                 $flags[] = '<span title="Abuser Detected">⚠️</span>';
             }
             $row['flags'] = implode(' ', $flags);
+
+            // Save it?
             $ipData[$ip] = $row;
             if ($save) {
                 $this->saveIP($ip, $row);
             }
         }
-        return $ipData;
+        return collect($ipData)->sortByDesc('count')->all();
     }
 
     /**
